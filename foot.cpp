@@ -423,19 +423,18 @@ void foot::generateTemplateNp(){
 //// OCCLUSION ////
 
 //// Matching Score Partial Occlusion ////
-Mat foot::matchingScorePocc(int pie){
+void foot::matchingScorePocc(int pie){
 
     int offset_oc = 10;
 
     int xoc = frameAct.footBoxes[1].x - offset_oc,  yoc = frameAct.footBoxes[1].y - offset_oc;
     int woc = frameAct.footBoxes[1].width + 2*offset_oc, hoc = frameAct.footBoxes[1].height + 2*offset_oc;
 
-    Rect roioc(xoc, yoc, woc, hoc);
-    frameAct.occlusionFrame.release();
-    frameAct.occlusionFrame = frameAct.procesFrame(roioc);
-    //frameAct.occlumaskFrame = frameAct.segmentedFrame(roioc);
+    cv::Rect roioc(xoc, yoc, woc, hoc);
 
-    /*
+    frameAct.occlusionFrame = frameAct.procesFrame(roioc);
+    frameAct.occlumaskFrame = frameAct.segmentedFrame(roioc);
+
     Mat matchScore, matchScoreShow;
 
     if (pie == Right)
@@ -457,7 +456,6 @@ Mat foot::matchingScorePocc(int pie){
         frameAct.matchScoreShowL = matchScoreShow;
     }
 
-    */
 
 }
 
@@ -495,7 +493,7 @@ void foot::drawingResults(){
         cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0,0,255), -1);
     }
 
-    /*
+
     //// Matchscore Partial Occlusion ////
     if (occlusion){
 
@@ -524,7 +522,7 @@ void foot::drawingResults(){
         imshow("Matchscore L", frameAct.matchScoreShowL);
 
     }
-    */
+
 
 
 }

@@ -82,7 +82,7 @@ class foot {
         void generateTemplateNp();
 
         //// Partial Occlusion ////
-        Mat matchingScorePocc(int pie);
+        void matchingScorePocc(int pie);
 
         //// Drawing Result ////
         void drawingResults();
