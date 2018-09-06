@@ -435,6 +435,7 @@ void foot::matchingScorePocc(int pie){
     frameAct.occlusionFrame = frameAct.procesFrame(roioc);
     frameAct.occlumaskFrame = frameAct.segmentedFrame(roioc);
 
+    /*
     Mat matchScore, matchScoreShow;
 
     if (pie == Right)
@@ -455,7 +456,7 @@ void foot::matchingScorePocc(int pie){
         frameAct.matchScoreL = matchScore;
         frameAct.matchScoreShowL = matchScoreShow;
     }
-
+    */
 
 }
 
