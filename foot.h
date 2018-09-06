@@ -26,6 +26,7 @@ using namespace std;
 using namespace cv;
 
 typedef struct {
+
     ////// Frames //////
     cv::Mat actualFrame;
     cv::Mat previousFrame;
@@ -38,12 +39,15 @@ typedef struct {
     cv::Mat tempmaskFrameL;
     cv::Mat occlusionFrame;
     cv::Mat occlumaskFrame;
+    cv::Mat matchScoreR;
+    cv::Mat matchScoreL;
+    cv::Mat matchScoreShowR;
+    cv::Mat matchScoreShowL;
+
     //// Foot Boxes ////
     map<int, Rect> footBoxes;
     map<int, Rect> blobBoxes;
     map<int, Rect> tempBoxes;
-    //// Foot Points ////
-    Point occlusionCorner;
 
 
 } ImageBoxes;
@@ -77,8 +81,8 @@ class foot {
         //// Generate Template ////
         void generateTemplateNp();
 
-        //// Occlusion ////
-        //Mat matchingScore(int pie);
+        //// Partial Occlusion ////
+        Mat matchingScorePocc(int pie);
 
         //// Drawing Result ////
         void drawingResults();
@@ -98,12 +102,10 @@ public:
         bool Reset_L;
         bool step_R;
         bool step_L;
-
         bool occlusion;
 
         //// Image & Boxes Atributes ////
         ImageBoxes frameAct, frameAnt;
-
 
         //// Kalman Atributes ////
         unsigned int type = CV_32F;
@@ -125,13 +127,10 @@ public:
         cv::Point centerKalman_L, centerMeasured_L;
         cv::Point centerKalman_R, centerMeasured_R;
 
-
         //// Errors Normal Detection ////
         double errorNpAct1_R, errorNpAnt1_R; // |Measured position - Kalman predicition|
         double errorNpAct1_L, errorNpAnt1_L;
         double errorNpAct2, errorNpAnt2; // |Measured position - Kalman correction|
-
-
 
 };
 

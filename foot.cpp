@@ -395,120 +395,72 @@ void foot::generateTemplateNp(){
     int xl, yl, wl, hl;
     int offsetR = 1, offsetL = 1;
 
-    xr = frameAct.footBoxes[Right].x - offsetR; yr = frameAnt.footBoxes[Right].y - offsetR;
-    wr = frameAnt.footBoxes[Right].width + 2*offsetR; hr = frameAnt.footBoxes[Right].height + 2*offsetR;
+    if (frameAct.footBoxes[Right].width > 0 && frameAct.footBoxes[Left].width > 0){
 
-    xl = frameAnt.footBoxes[Left].x - offsetL; yl = frameAnt.footBoxes[Left].y - offsetL;
-    wl = frameAnt.footBoxes[Left].width + 2*offsetL; hl = frameAnt.footBoxes[Left].height + 2*offsetL;
+        xr = frameAct.footBoxes[Right].x - offsetR; yr = frameAnt.footBoxes[Right].y - offsetR;
+        wr = frameAnt.footBoxes[Right].width + 2*offsetR; hr = frameAnt.footBoxes[Right].height + 2*offsetR;
 
-    Rect roifoot_r(xr, yr, wr, hr);
-    Rect roifoot_l(xl, yl, wl, hl);
+        xl = frameAnt.footBoxes[Left].x - offsetL; yl = frameAnt.footBoxes[Left].y - offsetL;
+        wl = frameAnt.footBoxes[Left].width + 2*offsetL; hl = frameAnt.footBoxes[Left].height + 2*offsetL;
 
-    frameAct.templateFrameR = frameAct.procesFrame(roifoot_r);
-    frameAct.tempmaskFrameR = frameAct.segmentedFrame(roifoot_r);
+        if (xr > 0 && xl > 0 && yr > 0 && yl > 0){
 
-    frameAct.templateFrameL = frameAct.procesFrame(roifoot_l);
-    frameAct.tempmaskFrameL = frameAct.segmentedFrame(roifoot_l);
+            Rect roifootR(xr, yr, wr, hr);
+            Rect roifootL(xl, yl, wl, hl);
+
+            frameAct.templateFrameR = frameAct.procesFrame(roifootR);
+            frameAct.tempmaskFrameR = frameAct.segmentedFrame(roifootR);
+
+            frameAct.templateFrameL = frameAct.procesFrame(roifootL);
+            frameAct.tempmaskFrameL = frameAct.segmentedFrame(roifootL);
+
+        }
+    }
 
 }
 
 
 //// OCCLUSION ////
-/*
-Mat foot::matchingScore(int pie){
+
+//// Matching Score Partial Occlusion ////
+Mat foot::matchingScorePocc(int pie){
 
     int offset_oc = 10;
-    int offset_ra = 1, offset_la = 1;
-    Point occ_corner;
-
-    bool ocultamiento_ant = bool(frameAnt.footBoxes.size() == 1);
-    int xra, yra, wra, hra;
-    int xla, yla, wla, hla;
-
-    if (pie == Right){
-        xra = frameAnt.footBoxes[Right].x - offset_ra; yra = frameAnt.footBoxes[Right].y - offset_ra;
-        wra = frameAnt.footBoxes[Right].width + 2*offset_ra; hra = frameAnt.footBoxes[Right].height + 2*offset_ra;
-        if (ocultamiento_ant){
-            xla = xra; yla = yra;
-            wla = wra; hla = hra;
-        }else{
-            xla = frameAnt.footBoxes[Left].x - offset_la; yla = frameAnt.footBoxes[Left].y - offset_la;
-            wla = frameAnt.footBoxes[Left].width + 2*offset_la; hla = frameAnt.footBoxes[Left].height + 2*offset_la;
-        }
-    }else{
-        xla = frameAnt.footBoxes[Right].x - offset_la; yla = frameAnt.footBoxes[Right].y - offset_la;
-        wla = frameAnt.footBoxes[Right].width + 2*offset_la; hla = frameAnt.footBoxes[Right].height + 2*offset_la;
-        if (ocultamiento_ant){
-            xra = xla; yra = yla;
-            wra = wla; hra = hla;
-        }else{
-            xra = frameAnt.footBoxes[Left].x - offset_ra; yra = frameAnt.footBoxes[Left].y - offset_ra;
-            wra = frameAnt.footBoxes[Left].width + 2*offset_ra; hra = frameAnt.footBoxes[Left].height + 2*offset_ra;
-        }
-    }
-
-    Rect roifoot_r(xra, yra, wra, hra);
-    Rect roifoot_l(xla, yla, wla, hla);
-
-    if (pie == Right){
-        frameAnt.tempBoxes[Right].width = wra;
-        frameAnt.tempBoxes[Right].height  = hra;
-        frameAnt.templateFrameR = frameAnt.procesFrame(roifoot_r);
-        frameAnt.tempmaskFrameR = frameAnt.segmentedFrame(roifoot_r);
-    }else{
-        frameAnt.tempBoxes[Left].width = wla;
-        frameAnt.tempBoxes[Left].height  = hla;
-        frameAnt.templateFrameL = frameAnt.procesFrame(roifoot_l);
-        frameAnt.tempmaskFrameL = frameAnt.segmentedFrame(roifoot_l);
-    }
 
     int xoc = frameAct.footBoxes[1].x - offset_oc,  yoc = frameAct.footBoxes[1].y - offset_oc;
     int woc = frameAct.footBoxes[1].width + 2*offset_oc, hoc = frameAct.footBoxes[1].height + 2*offset_oc;
 
     Rect roioc(xoc, yoc, woc, hoc);
+    frameAct.occlusionFrame.release();
     frameAct.occlusionFrame = frameAct.procesFrame(roioc);
-    frameAct.occlumaskFrame = frameAnt.segmentedFrame(roioc);
+    //frameAct.occlumaskFrame = frameAct.segmentedFrame(roioc);
 
-    occ_corner.x = xoc;
-    occ_corner.y = yoc;
-    frameAct.occlusionCorner = occ_corner;
-
-    Mat color, color_show;
+    /*
+    Mat matchScore, matchScoreShow;
 
     if (pie == Right)
-        matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameR, color, CV_TM_SQDIFF_NORMED);
+        matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameR, matchScore, CV_TM_SQDIFF_NORMED);
     else
-        matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameL, color, CV_TM_SQDIFF_NORMED);
+        matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameL, matchScore, CV_TM_SQDIFF_NORMED);
 
-    color = 1 - color;
-    normalize(color, color, 255, 0, NORM_MINMAX);
-    color.convertTo(color, CV_8UC1);
-    color.convertTo(color_show, CV_8UC1);
-    applyColorMap(color_show, color_show, COLORMAP_JET);
+    matchScore = 1 - matchScore;
+    normalize(matchScore, matchScore, 255, 0, NORM_MINMAX);
+    matchScore.convertTo(matchScore, CV_8UC1);     // NOLINT
+    matchScore.convertTo(matchScoreShow, CV_8UC1); // NOLINT
+    applyColorMap(matchScoreShow, matchScoreShow, COLORMAP_JET);
 
-    namedWindow( "Template", WINDOW_AUTOSIZE );
-    //namedWindow( "occlusion box", WINDOW_AUTOSIZE );
-    //namedWindow( "occlusion seg", WINDOW_AUTOSIZE );
-    //namedWindow( "matchscore", WINDOW_AUTOSIZE );
+    if (pie == Right){
+        frameAct.matchScoreR = matchScore;
+        frameAct.matchScoreShowR = matchScoreShow;
+    }else{
+        frameAct.matchScoreL = matchScore;
+        frameAct.matchScoreShowL = matchScoreShow;
+    }
 
-    Size size_tempBox(frameAnt.templateFrameR.cols*10, frameAnt.templateFrameR.rows*10);
-    Size size_ocBox(frameAct.occlusionFrame.cols*10, frameAct.occlusionFrame.rows*10);
-    Size size_color(color_show.cols*10, color_show.rows*10);
+    */
 
-    resize(tempBox, tempBox, size_tempBox);
-    resize(occBox, occBox, size_ocBox);
-    resize(occBox_mask, occBox_mask, size_ocBox);
-    resize(color_show, color_show, size_color);
-
-    imshow("Template", tempBox);
-    //imshow("occlusion box", occBox);
-    //imshow("occlusion seg", occBox_mask);
-    imshow("matchscore", color_show);
-
-
-    return color;
 }
-*/
+
 
 
 
@@ -542,5 +494,37 @@ void foot::drawingResults(){
         cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Left], CV_RGB(0, 0, 255), 2);
         cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0,0,255), -1);
     }
+
+    /*
+    //// Matchscore Partial Occlusion ////
+    if (occlusion){
+
+        namedWindow("Occlusion", WINDOW_AUTOSIZE);
+        namedWindow("Template R", WINDOW_AUTOSIZE);
+        namedWindow("Template L", WINDOW_AUTOSIZE);
+        namedWindow("Matchscore R", WINDOW_AUTOSIZE);
+        namedWindow("Matchscore L", WINDOW_AUTOSIZE);
+
+        Size sizeoccBox(frameAct.occlusionFrame.cols*10, frameAct.occlusionFrame.rows*10);
+        Size sizetempBoxR(frameAnt.templateFrameR.cols*10, frameAnt.templateFrameR.rows*10);
+        Size sizetempBoxL(frameAnt.templateFrameL.cols*10, frameAnt.templateFrameL.rows*10);
+        Size sizematchScoreR(frameAct.matchScoreShowR.cols*10, frameAct.matchScoreShowR.rows*10);
+        Size sizematchScoreL(frameAct.matchScoreShowL.cols*10, frameAct.matchScoreShowL.rows*10);
+
+        resize(frameAct.occlusionFrame, frameAct.occlusionFrame, sizeoccBox);
+        resize(frameAnt.templateFrameR, frameAnt.templateFrameR, sizetempBoxR);
+        resize(frameAnt.templateFrameL, frameAnt.templateFrameL, sizetempBoxL);
+        resize(frameAct.matchScoreShowR, frameAct.matchScoreShowR, sizematchScoreR);
+        resize(frameAct.matchScoreShowL, frameAct.matchScoreShowL, sizematchScoreL);
+
+        imshow("Occlusion", frameAct.occlusionFrame);
+        imshow("Template R", frameAnt.templateFrameR);
+        imshow("Template L", frameAnt.templateFrameL);
+        imshow("Matchscore R", frameAct.matchScoreShowR);
+        imshow("Matchscore L", frameAct.matchScoreShowL);
+
+    }
+    */
+
 
 }

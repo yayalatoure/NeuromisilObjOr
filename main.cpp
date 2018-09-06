@@ -52,10 +52,8 @@ int main(int argc, char *argv[]){
     Foot.KalmanInit(Foot.Right);
     Foot.KalmanInit(Foot.Left);
 
-
     Foot.errorNpAct1_R = 0;
 
-    Mat tempBox;
 
 
     while(ch != 'q' && ch != 'Q') {
@@ -121,8 +119,8 @@ int main(int argc, char *argv[]){
                     Foot.KalmanResetStep(Foot.Left);
 
                     //// Generate Template ////
-                    //Foot.generateTemplateNp();
-                    //tempBox = Foot.frameAnt.templateFrameR;
+                    Foot.generateTemplateNp();
+
 
                     //// Drawing Results ////
                     Foot.drawingResults();
@@ -130,7 +128,7 @@ int main(int argc, char *argv[]){
 
 
                 }else{
-
+                    /*
                     //// Measure Foot ////
                     Foot.measureFoot(Foot.Right);
                     Foot.measureFoot(Foot.Left);
@@ -150,12 +148,16 @@ int main(int argc, char *argv[]){
                     //// Kalman Reset Step ////
                     Foot.KalmanResetStep(Foot.Right);
                     Foot.KalmanResetStep(Foot.Left);
+                    */
+
+                    //// matchingScorePocc ////
+//                    Foot.matchingScorePocc(Foot.Right);
+//                    Foot.matchingScorePocc(Foot.Left);
+
 
                     //// Drawing Results ////
                     Foot.drawingResults();
 
-                    cout << Foot.step_R << endl;
-                    cout << Foot.step_L << endl;
 
 
                 }
@@ -178,6 +180,11 @@ int main(int argc, char *argv[]){
 
             cv::imshow("frameAct",  Foot.frameAct.resultFrame);
             cv::imshow("frameAnt ", Foot.frameAnt.resultFrame);
+
+
+
+
+
 
 
         }
