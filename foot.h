@@ -49,7 +49,6 @@ typedef struct {
     map<int, Rect> blobBoxes;
     map<int, Rect> tempBoxes;
 
-
 } ImageBoxes;
 
 
@@ -61,7 +60,6 @@ class foot {
 
         //// Segmentation & ROI (footBoxes) ////
         void findBoxes();
-        void paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes);
         void getBlobs(cv::Mat labels, std::map<int, cv::Rect> &bboxes);
         void getFeet(Mat fg, map<int, Rect> &bboxes, Mat labels, Mat labels2, map<int, Rect> &fboxes);
 
@@ -84,8 +82,12 @@ class foot {
         //// Partial Occlusion ////
         void matchingScorePocc();
 
+        //// Find Local Maximum ////
+        void FindLocalMaximum();
+
         //// Drawing Result ////
         void drawingResults();
+        void paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes, cv::Scalar color);
 
 
 
@@ -131,6 +133,14 @@ public:
         double errorNpAct1_R, errorNpAnt1_R; // |Measured position - Kalman predicition|
         double errorNpAct1_L, errorNpAnt1_L;
         double errorNpAct2, errorNpAnt2; // |Measured position - Kalman correction|
+
+
+
+        //// Colors ////
+        cv::Scalar cyan;
+        cv::Scalar green;
+        cv::Scalar ivory;
+        cv::Scalar blueviolet;
 
 };
 

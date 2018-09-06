@@ -4,6 +4,7 @@
 
 #include "foot.h"
 
+//// CONSTRUCTOR ////
 
 foot::foot(bool start) {
     this -> start = true;
@@ -14,13 +15,26 @@ foot::foot(bool start) {
     occlusion = false;
 }
 
+
+//// COLORS ////
+
+cv::Scalar foot::cyan(255, 255, 0);
+cv::Scalar foot::green(0, 255, 0);
+cv::Scalar foot::ivory(240, 255, 255);
+cv::Scalar foot::blueviolet(226, 43, 138);
+
+
+
+//// SEGMENTATION AND FOOT BOXES ////
+
+
 //// Draw Foot Rectangles from Measurement ////
-void foot::paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes){
+void foot::paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes, cv::Scalar color){
     std::map<int, cv::Rect>::iterator it, it_end = bboxes.end();
     int i = 0;
     for(it = bboxes.begin(); it != it_end; it++) {
         i += 1;
-        cv::rectangle(img, it->second, cv::Scalar(0,255,0), 2);
+        cv::rectangle(img, it->second, color, 2);
         if (i == 2)
             break;
     }
@@ -125,6 +139,9 @@ void foot::findBoxes(){
 
 
 }
+
+
+//// KALMAN FILTER ////
 
 
 //// Kalman Initialization////
@@ -384,25 +401,31 @@ void foot::KalmanUpdate(int pie){
 }
 
 
+//// TEMPLATE NORMAL DETECTION ////
+
 //// Generate Template ////
 void foot::generateTemplateNp(){
 
     int xr, yr, wr, hr;
     int xl, yl, wl, hl;
-    int offsetR = 1, offsetL = 1;
+    int offsetR = 2, offsetL = 2;
 
-    if (frameAct.footBoxes[Right].width > 0 && frameAct.footBoxes[Left].width > 0){
+    if (frameAct.footBoxes[Right].width > 0 && frameAct.footBoxes[Left].width > 0 &&
+            frameAct.footBoxes[Right].height > 0 && frameAct.footBoxes[Left].height > 0 ){
 
-        xr = frameAct.footBoxes[Right].x - offsetR; yr = frameAnt.footBoxes[Right].y - offsetR;
-        wr = frameAnt.footBoxes[Right].width + 2*offsetR; hr = frameAnt.footBoxes[Right].height + 2*offsetR;
+        xr = frameAct.footBoxes[Right].x - offsetR; yr = frameAct.footBoxes[Right].y - offsetR;
+        wr = frameAct.footBoxes[Right].width + 2*offsetR; hr = frameAct.footBoxes[Right].height + 2*offsetR;
 
-        xl = frameAnt.footBoxes[Left].x - offsetL; yl = frameAnt.footBoxes[Left].y - offsetL;
-        wl = frameAnt.footBoxes[Left].width + 2*offsetL; hl = frameAnt.footBoxes[Left].height + 2*offsetL;
+        xl = frameAct.footBoxes[Left].x - offsetL; yl = frameAct.footBoxes[Left].y - offsetL;
+        wl = frameAct.footBoxes[Left].width + 2*offsetL; hl = frameAct.footBoxes[Left].height + 2*offsetL;
 
         if (xr > 0 && xl > 0 && yr > 0 && yl > 0){
 
             Rect roifootR(xr, yr, wr, hr);
             Rect roifootL(xl, yl, wl, hl);
+
+            frameAct.tempBoxes[Right] = roifootR;
+            frameAct.tempBoxes[Left]  = roifootL;
 
             frameAct.templateFrameR = frameAct.procesFrame(roifootR);
             frameAct.tempmaskFrameR = frameAct.segmentedFrame(roifootR);
@@ -415,10 +438,12 @@ void foot::generateTemplateNp(){
 
 }
 
+
 //// OCCLUSION ////
 
+
 //// Matching Score Partial Occlusion
-////gets the matching score for Right and Left foot.
+//// gets the matching score for Right and Left foot.
 void foot::matchingScorePocc(){
 
     int offset_oc = 10;
@@ -453,6 +478,93 @@ void foot::matchingScorePocc(){
 
 }
 
+//// Found Local Maximum ////
+void foot::FindLocalMaximum(){
+
+    cv::Mat segmentationR, segmentationL;
+    cv::Mat erodedR, erodedL;
+    cv::Mat statusR, statusL;
+    cv::Mat centroidsR, centroidsL;
+    cv::Mat componentsR, componentsL;
+
+    double minVal, maxVal;
+    cv::Point  minLoc, maxLoc;
+
+    vector<cv::Point> result;
+    cv::Point centro_masa;
+
+    //// Segmentation ////
+    threshold(frameAct.matchScoreR, segmentationR, 190, 255, THRESH_BINARY);
+    threshold(frameAct.matchScoreL, segmentationL, 190, 255, THRESH_BINARY);
+    //// Eroded ////
+    erode(segmentationR, erodedR, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2)));
+    erode(segmentationL, erodedL, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2)));
+    //// Connected Component ////
+    connectedComponentsWithStats(erodedR, componentsR, statusR, centroidsR, 4, CV_32S);
+    connectedComponentsWithStats(erodedL, componentsL, statusL, centroidsL, 4, CV_32S);
+
+    componentsR.convertTo(componentsR, CV_8UC1); // NOLINT
+    componentsL.convertTo(componentsL, CV_8UC1); // NOLINT
+
+
+
+
+    /*
+    cv::Mat auxR(componentsR.rows, componentsR.cols, CV_8UC1, Scalar(0)); // NOLINT
+    cv::Mat auxL(componentsL.rows, componentsL.cols, CV_8UC1, Scalar(0)); // NOLINT
+
+    vector<Mat> subimages;
+
+    for (unsigned int i = 0; i < centroids.rows - 1 ; ++i){
+        for (unsigned int j = 0; j < components.rows; ++j){
+            for (unsigned int k = 0; k < components.cols; ++k){
+                if(components.at<uchar>(j, k) == i+1)
+                    aux.at<uchar>(j,k) = 1;
+                else
+                    aux.at<uchar>(j,k) = 0;
+            }
+        }
+
+        centro_masa.x = int(centroids.at<double>(i+1,0));
+        centro_masa.y = int(centroids.at<double>(i+1,1));
+        result.push_back(centro_masa);
+
+        circle(matchscore, centro_masa, 1, CV_RGB(0,255,0), -1);
+
+        dilate(aux, aux, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3)));
+        subimages.push_back(aux.clone());
+        matchscore.copyTo(match_proc, subimages.at(i));
+        minMaxLoc(match_proc, &minVal, &maxVal, &minLoc, &maxLoc, Mat());
+        //circle(matchscore, maxLoc, 1, CV_RGB(0,255,0), -1);
+
+        ////result.push_back(maxLoc);
+
+        match_proc.release();
+
+    }
+
+    */
+
+
+    matchscore.convertTo(match_show, CV_8UC1); //NO INTENT
+    applyColorMap(match_show, match_show, COLORMAP_JET);
+    namedWindow("maximos", WINDOW_AUTOSIZE );
+    Size size_match_show(match_show.cols*10, match_show.rows*10);
+    resize(match_show, match_show, size_match_show);
+    imshow("maximos", match_show);
+
+    namedWindow("match labels", WINDOW_AUTOSIZE );
+    Size size_components(components.cols*10, components.rows*10);
+    resize(components, components, size_components);
+    normalize(components, components, 255, 0, NORM_MINMAX);
+    imshow("match labels", components);
+
+    ////cout << "Tamaño vector: " << result.size() << endl;
+
+    return result;
+}
+
+
 
 
 
@@ -473,40 +585,44 @@ void foot::matchingScorePocc(){
 
 
 //// Draw Results to Image ////
-void foot::drawingResults(){
+void foot::drawingResults() {
 
     //// Foots Rectangles ////
-    paintRectangles(frameAct.resultFrame, frameAct.footBoxes);
+    paintRectangles(frameAct.resultFrame, frameAct.footBoxes, green);
 
-    //// Measured Centers ////
-    cv::circle(frameAct.resultFrame, centerMeasured_R, 2, CV_RGB(0,255,0), -1);
-    cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0,255,0), -1);
+    if(!occlusion){
 
-    //// Kalman Prediction ////
-    cv::rectangle(frameAct.resultFrame, predRect_R, CV_RGB(255,0,0), 2);
-    cv::rectangle(frameAct.resultFrame, predRect_L, CV_RGB(255,0,0), 2);
-    cv::circle(frameAct.resultFrame, centerKalman_R, 2, CV_RGB(255,0,0), -1);
-    cv::circle(frameAct.resultFrame, centerKalman_L, 2, CV_RGB(255,0,0), -1);
+        //// Measured Centers ////
+        cv::circle(frameAct.resultFrame, centerMeasured_R, 2, CV_RGB(0, 255, 0), -1);
+        cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0, 255, 0), -1);
 
-    //// Step Normal Detection ////
-    if (step_R && !occlusion){
-        cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Right], CV_RGB(0, 0, 255), 2);
-        cv::circle(frameAct.resultFrame, centerMeasured_R, 2, CV_RGB(0,0,255), -1);
-    }
-    if (step_L && !occlusion){
-        cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Left], CV_RGB(0, 0, 255), 2);
-        cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0,0,255), -1);
-    }
+        //// Kalman Prediction ////
+        cv::rectangle(frameAct.resultFrame, predRect_R, CV_RGB(255, 0, 0), 2);
+        cv::rectangle(frameAct.resultFrame, predRect_L, CV_RGB(255, 0, 0), 2);
+        cv::circle(frameAct.resultFrame, centerKalman_R, 2, CV_RGB(255, 0, 0), -1);
+        cv::circle(frameAct.resultFrame, centerKalman_L, 2, CV_RGB(255, 0, 0), -1);
 
+        //// Step Normal Detection ////
+        if (step_R && !occlusion) {
+            cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Right], CV_RGB(0, 0, 255), 2);
+            cv::circle(frameAct.resultFrame, centerMeasured_R, 2, CV_RGB(0, 0, 255), -1);
+        }
+        if (step_L && !occlusion) {
+            cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Left], CV_RGB(0, 0, 255), 2);
+            cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0, 0, 255), -1);
+        }
+
+        //// Template Boxes Generated in Normal Detection ////
+        paintRectangles(frameAct.resultFrame, frameAct.tempBoxes, blueviolet);
 
     //// Matchscore Partial Occlusion ////
-    if (occlusion){
+    }else{
 
         namedWindow("Occlusion", WINDOW_AUTOSIZE);
-        namedWindow("Template R", WINDOW_AUTOSIZE);
-        namedWindow("Template L", WINDOW_AUTOSIZE);
-        namedWindow("Matchscore R", WINDOW_AUTOSIZE);
-        namedWindow("Matchscore L", WINDOW_AUTOSIZE);
+        namedWindow("TempR", WINDOW_AUTOSIZE);
+        namedWindow("TempL", WINDOW_AUTOSIZE);
+        namedWindow("MatchR", WINDOW_AUTOSIZE);
+        namedWindow("MatchL", WINDOW_AUTOSIZE);
 
         Size sizeoccBox(frameAct.occlusionFrame.cols*10, frameAct.occlusionFrame.rows*10);
         Size sizetempBoxR(frameAnt.templateFrameR.cols*10, frameAnt.templateFrameR.rows*10);
@@ -521,10 +637,10 @@ void foot::drawingResults(){
         resize(frameAct.matchScoreShowL, frameAct.matchScoreShowL, sizematchScoreL);
 
         imshow("Occlusion", frameAct.occlusionFrame);
-        imshow("Template R", frameAnt.templateFrameR);
-        imshow("Template L", frameAnt.templateFrameL);
-        imshow("Matchscore R", frameAct.matchScoreShowR);
-        imshow("Matchscore L", frameAct.matchScoreShowL);
+        imshow("TempR", frameAnt.templateFrameR);
+        imshow("TempL", frameAnt.templateFrameL);
+        imshow("MatchR", frameAct.matchScoreShowR);
+        imshow("MatchL", frameAct.matchScoreShowL);
 
     }
 

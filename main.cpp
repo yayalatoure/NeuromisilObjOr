@@ -58,7 +58,8 @@ int main(int argc, char *argv[]){
 
     while(ch != 'q' && ch != 'Q') {
 
-        Mat matchscore_right, matchscore_left;
+        //// Transfer Frame Structure ////
+        Foot.frameAnt = Foot.frameAct;
 
         ////////// Frame Acquisition /////////
         if (count_cal < limit) {
@@ -86,13 +87,10 @@ int main(int argc, char *argv[]){
             Foot.step_R = false;
             Foot.step_L = false;
 
-            //// Transfer Frame Structure ////
-            Foot.frameAnt = Foot.frameAct;
-
             //////// 2D Feet Boxes ////////
             Foot.frameAct.resultFrame = Foot.frameAct.procesFrame.clone();
             Foot.findBoxes();
-            Foot.occlusion = bool(Foot.frameAct.footBoxes.size() == 1);
+            Foot.occlusion = bool(Foot.frameAct.footBoxes.size() <= 1);
 
 
             if (Foot.found){
@@ -153,8 +151,6 @@ int main(int argc, char *argv[]){
                     //// matchingScorePocc ////
                     Foot.matchingScorePocc();
 
-
-
                     //// Drawing Results ////
                     Foot.drawingResults();
 
@@ -162,7 +158,7 @@ int main(int argc, char *argv[]){
 
                 }
 
-
+                cout << Foot.occlusion << endl;
 
             }
 
