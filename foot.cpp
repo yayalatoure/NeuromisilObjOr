@@ -14,9 +14,7 @@ foot::foot(bool start) {
     occlusion = false;
 }
 
-/*
-Función que dibuja a lo más dos rectangulos en el frame de entrada.
-*/
+//// Draw Foot Rectangles from Measurement ////
 void foot::paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes){
     std::map<int, cv::Rect>::iterator it, it_end = bboxes.end();
     int i = 0;
@@ -29,6 +27,7 @@ void foot::paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes){
 
 }
 
+//// Get Bigger Blobs of Segmentation Image Lower Part ////
 void foot::getBlobs(cv::Mat labels, std::map<int, cv::Rect> &bboxes) {
 
     int ro = labels.rows, co = labels.cols;
@@ -57,6 +56,7 @@ void foot::getBlobs(cv::Mat labels, std::map<int, cv::Rect> &bboxes) {
         }
 }
 
+//// Get Foot Boxes from Blobs and Labels ////
 void foot::getFeet(cv::Mat fg, std::map<int, cv::Rect> &bboxes, cv::Mat labels, cv::Mat labels2, std::map<int, cv::Rect> &fboxes){
 
     // Selecciona la región conectada más grande
@@ -90,6 +90,7 @@ void foot::getFeet(cv::Mat fg, std::map<int, cv::Rect> &bboxes, cv::Mat labels, 
 
 }
 
+//// Segmentation and Foot Boxes ////
 void foot::findBoxes(){
 
     /* Inicializacion */
@@ -114,19 +115,14 @@ void foot::findBoxes(){
     cv::erode(fg, fg, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,5))); ////(4,6)
     cv::connectedComponentsWithStats(fg, labels, stats, centroids, 8, CV_32S);
 
-    if(start){
+    //if(start){
         getFeet(fg, frameAct.blobBoxes, labels, labels2, frameAct.footBoxes);
-    }
+        found = frameAct.footBoxes[1].width > 0;
+        frameAct.segmentedFrame  =  fg.clone();
+    //}
 
-    if (frameAct.footBoxes[1].width > 0)
-        found = true;
-    else
-        found = false;
 
-    frameAct.segmentedFrame  =  fg.clone();
 
-    //Frames.blobBoxes.clear();
-    //Frames.footBoxes.clear();
 
 }
 
@@ -419,14 +415,13 @@ void foot::generateTemplateNp(){
 
 }
 
-
 //// OCCLUSION ////
 
-//// Matching Score Partial Occlusion ////
-void foot::matchingScorePocc(int pie){
+//// Matching Score Partial Occlusion
+////gets the matching score for Right and Left foot.
+void foot::matchingScorePocc(){
 
     int offset_oc = 10;
-
     int xoc = frameAct.footBoxes[1].x - offset_oc,  yoc = frameAct.footBoxes[1].y - offset_oc;
     int woc = frameAct.footBoxes[1].width + 2*offset_oc, hoc = frameAct.footBoxes[1].height + 2*offset_oc;
 
@@ -435,30 +430,39 @@ void foot::matchingScorePocc(int pie){
     frameAct.occlusionFrame = frameAct.procesFrame(roioc);
     frameAct.occlumaskFrame = frameAct.segmentedFrame(roioc);
 
-    /*
-    Mat matchScore, matchScoreShow;
+    cv::Mat matchScoreR, matchScoreL, matchScoreShowR, matchScoreShowL;
 
-    if (pie == Right)
-        matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameR, matchScore, CV_TM_SQDIFF_NORMED);
-    else
-        matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameL, matchScore, CV_TM_SQDIFF_NORMED);
+    matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameR, matchScoreR, CV_TM_SQDIFF_NORMED);
+    matchTemplate(frameAct.occlusionFrame, frameAnt.templateFrameL, matchScoreL, CV_TM_SQDIFF_NORMED);
 
-    matchScore = 1 - matchScore;
-    normalize(matchScore, matchScore, 255, 0, NORM_MINMAX);
-    matchScore.convertTo(matchScore, CV_8UC1);     // NOLINT
-    matchScore.convertTo(matchScoreShow, CV_8UC1); // NOLINT
-    applyColorMap(matchScoreShow, matchScoreShow, COLORMAP_JET);
+    matchScoreR = 1 - matchScoreR;
+    matchScoreL = 1 - matchScoreL;
+    normalize(matchScoreR, matchScoreR, 255, 0, NORM_MINMAX);
+    normalize(matchScoreL, matchScoreL, 255, 0, NORM_MINMAX);
+    matchScoreR.convertTo(matchScoreR, CV_8UC1);     // NOLINT
+    matchScoreL.convertTo(matchScoreL, CV_8UC1);     // NOLINT
+    matchScoreR.convertTo(matchScoreShowR, CV_8UC1); // NOLINT
+    matchScoreL.convertTo(matchScoreShowL, CV_8UC1); // NOLINT
+    applyColorMap(matchScoreShowR, matchScoreShowR, COLORMAP_JET);
+    applyColorMap(matchScoreShowL, matchScoreShowL, COLORMAP_JET);
 
-    if (pie == Right){
-        frameAct.matchScoreR = matchScore;
-        frameAct.matchScoreShowR = matchScoreShow;
-    }else{
-        frameAct.matchScoreL = matchScore;
-        frameAct.matchScoreShowL = matchScoreShow;
-    }
-    */
+    frameAct.matchScoreR = matchScoreR;
+    frameAct.matchScoreShowR = matchScoreShowR;
+    frameAct.matchScoreL = matchScoreL;
+    frameAct.matchScoreShowL = matchScoreShowL;
 
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

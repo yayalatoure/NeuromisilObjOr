@@ -151,8 +151,8 @@ int main(int argc, char *argv[]){
                     */
 
                     //// matchingScorePocc ////
-                    Foot.matchingScorePocc(Foot.Right);
-                    Foot.matchingScorePocc(Foot.Left);
+                    Foot.matchingScorePocc();
+
 
 
                     //// Drawing Results ////
