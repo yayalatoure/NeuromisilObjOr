@@ -336,6 +336,8 @@ void foot::kalmanUpdate(int pie){
         }
     }else{
 
+        //// ESTA WEA SE TIENE QUE CAMBIAR ////
+
         if (occlusion) {
             if(pie == Right) {
                 (*measure).at<float>(0) = frameAct.footBoxes[Right].x + float(frameAct.footBoxes[Right].width) / 4;
@@ -404,7 +406,6 @@ void foot::generateTemplateNp(){
 
     int xr, yr, wr, hr;
     int xl, yl, wl, hl;
-    int offsetR = 2, offsetL = 2;
 
     if (frameAct.footBoxes[Right].width > 0 && frameAct.footBoxes[Left].width > 0 &&
             frameAct.footBoxes[Right].height > 0 && frameAct.footBoxes[Left].height > 0 ){
@@ -552,14 +553,16 @@ void foot::matchingSelectPocc(){
 void foot::proyectBoxes() {
 
     frameAct.footBoxes[Right]   = predRect_R;
-    frameAct.footBoxes[Right].x = maxlocSelectedR.x + occlusionCorner.x;
-    frameAct.footBoxes[Right].y = maxlocSelectedR.y + occlusionCorner.y;
+    frameAct.footBoxes[Right].x = maxlocSelectedR.x + occlusionCorner.x - offsetR/2;
+    frameAct.footBoxes[Right].y = maxlocSelectedR.y + occlusionCorner.y - offsetR/2;
 
     frameAct.footBoxes[Left]   = predRect_L;
-    frameAct.footBoxes[Left].x = maxlocSelectedL.x + occlusionCorner.x;
-    frameAct.footBoxes[Left].y = maxlocSelectedL.y + occlusionCorner.y;
+    frameAct.footBoxes[Left].x = maxlocSelectedL.x + occlusionCorner.x - offsetL/2;
+    frameAct.footBoxes[Left].y = maxlocSelectedL.y + occlusionCorner.y - offsetL/2;
 
 }
+
+
 
 
 
@@ -587,8 +590,8 @@ void foot::drawingResults() {
     if(!occlusion){
 
         //// Measured Centers ////
-        cv::circle(frameAct.resultFrame, centerMeasured_R, 2, CV_RGB(0, 255, 0), -1);
-        cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0, 255, 0), -1);
+        cv::circle(frameAct.resultFrame, centerMeasured_R, 2, green, -1);
+        cv::circle(frameAct.resultFrame, centerMeasured_L, 2, green, -1);
 
         //// Kalman Prediction ////
         cv::rectangle(frameAct.resultFrame, predRect_R, CV_RGB(255, 0, 0), 2);
@@ -607,16 +610,16 @@ void foot::drawingResults() {
         }
 
         //// Template Boxes Generated in Normal Detection ////
-        paintRectangles(frameAct.resultFrame, frameAct.tempBoxes, blueviolet);
+        //paintRectangles(frameAct.resultFrame, frameAct.tempBoxes, blueviolet);
 
     //// Matchscore Partial Occlusion ////
     }else{
 
-//        //// Kalman Prediction ////
-//        cv::rectangle(frameAct.resultFrame, predRect_R, CV_RGB(255, 0, 0), 2);
-//        cv::rectangle(frameAct.resultFrame, predRect_L, CV_RGB(255, 0, 0), 2);
-//        cv::circle(frameAct.resultFrame, centerKalman_R, 2, CV_RGB(255, 0, 0), -1);
-//        cv::circle(frameAct.resultFrame, centerKalman_L, 2, CV_RGB(255, 0, 0), -1);
+        //// Kalman Prediction ////
+        cv::rectangle(frameAct.resultFrame, predRect_R, CV_RGB(255, 0, 0), 2);
+        cv::rectangle(frameAct.resultFrame, predRect_L, CV_RGB(255, 0, 0), 2);
+        cv::circle(frameAct.resultFrame, centerKalman_R, 2, CV_RGB(255, 0, 0), -1);
+        cv::circle(frameAct.resultFrame, centerKalman_L, 2, CV_RGB(255, 0, 0), -1);
 
         //// Predicted Boxes ////
         paintRectangles(frameAct.resultFrame, frameAct.footBoxes, cyan);
@@ -666,6 +669,7 @@ void foot::clearVariables(){
 
     maxLocR.clear();
     maxLocL.clear();
+
 
 
 }

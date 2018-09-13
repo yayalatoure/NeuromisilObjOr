@@ -154,8 +154,10 @@ public:
 
         //// PARTIAL OCCLUSION ////
 
-        //// Occlusion Variables ////
+        //// Occlusion Atributes ////
         cv::Point occlusionCorner;
+        int offsetR = 2; // offset de template derecho
+        int offsetL = 2; // offset de template izquierdo
 
         //// Maximum Candidates ////
         cv::Mat centroidsR; // maximos locales matching R

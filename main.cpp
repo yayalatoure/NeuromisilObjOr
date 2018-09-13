@@ -104,13 +104,13 @@ int main(int argc, char *argv[]){
                     Foot.kalmanPredict(Foot.Right, dT);
                     Foot.kalmanPredict(Foot.Left, dT);
 
-                    //// Measure Error ////
-                    Foot.measureError1Np(Foot.Right);
-                    Foot.measureError1Np(Foot.Left);
-
                     //// Kalman Update ////
                     Foot.kalmanUpdate(Foot.Right);
                     Foot.kalmanUpdate(Foot.Left);
+
+                    //// Measure Error ////
+                    Foot.measureError1Np(Foot.Right);
+                    Foot.measureError1Np(Foot.Left);
 
                     //// Kalman Reset Step ////
                     Foot.kalmanResetStep(Foot.Right);
@@ -131,59 +131,52 @@ int main(int argc, char *argv[]){
                     ////  One matchingAraea? ////
                     Foot.occlusionType();
                     //// Total Occlusion? ////
-                    if (Foot.totalOccR && Foot.totalOccL){
+                    //if (Foot.totalOccR && Foot.totalOccL){
 
                         cout << "Total Occlusion" << endl;
 
-                    }else{
-                        //// Kalman Filter ////
-                        Foot.kalmanPredict(Foot.Right, dT);
-                        Foot.kalmanPredict(Foot.Left, dT);
-
-                        //// Maximum Candidates Vector ////
-                        Foot.maxCandidatesPocc();
-
-                        //// Select Matching Score ////
-                        Foot.matchingSelectPocc();
-
-                        //// Proyect Predicted Boxes ////
-                        Foot.proyectBoxes();
+                    //}else{
 
 
+                    //// Kalman Filter ////
+                    Foot.kalmanPredict(Foot.Right, dT);
+                    Foot.kalmanPredict(Foot.Left, dT);
 
+                    //// Maximum Candidates Vector ////
+                    Foot.maxCandidatesPocc();
 
+                    //// Select Matching Score ////
+                    Foot.matchingSelectPocc();
 
+                    //// Proyect Predicted Boxes ////
+                    Foot.proyectBoxes();
 
-
-
-
-                    }
-
-
-
-
-                    /*
                     //// Measure Foot ////
                     Foot.measureFoot(Foot.Right);
                     Foot.measureFoot(Foot.Left);
 
-
+                    //// Kalman Update ////
+                    Foot.kalmanUpdate(Foot.Right);
+                    Foot.kalmanUpdate(Foot.Left);
 
                     //// Measure Error ////
                     Foot.measureError1Np(Foot.Right);
                     Foot.measureError1Np(Foot.Left);
 
-                    //// Kalman Update ////
-                    Foot.KalmanUpdate(Foot.Right);
-                    Foot.KalmanUpdate(Foot.Left);
-
                     //// Kalman Reset Step ////
-                    Foot.KalmanResetStep(Foot.Right);
-                    Foot.KalmanResetStep(Foot.Left);
-                    */
+                    Foot.kalmanResetStep(Foot.Right);
+                    Foot.kalmanResetStep(Foot.Left);
+
+                    //// Generate Template ////
+                    Foot.generateTemplateNp();
 
 
 
+
+
+
+
+                    //}
 
 
                     //// Drawing Results ////
