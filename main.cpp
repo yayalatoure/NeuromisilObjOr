@@ -49,8 +49,8 @@ int main(int argc, char *argv[]){
 
     foot Foot(false);
 
-    Foot.KalmanInit(Foot.Right);
-    Foot.KalmanInit(Foot.Left);
+    Foot.kalmanInit(Foot.Right);
+    Foot.kalmanInit(Foot.Left);
 
     Foot.errorNpAct1_R = 0;
 
@@ -101,24 +101,23 @@ int main(int argc, char *argv[]){
                     Foot.measureFoot(Foot.Left);
 
                     //// Kalman Filter ////
-                    Foot.KalmanPredict(Foot.Right, dT);
-                    Foot.KalmanPredict(Foot.Left, dT);
+                    Foot.kalmanPredict(Foot.Right, dT);
+                    Foot.kalmanPredict(Foot.Left, dT);
 
                     //// Measure Error ////
                     Foot.measureError1Np(Foot.Right);
                     Foot.measureError1Np(Foot.Left);
 
                     //// Kalman Update ////
-                    Foot.KalmanUpdate(Foot.Right);
-                    Foot.KalmanUpdate(Foot.Left);
+                    Foot.kalmanUpdate(Foot.Right);
+                    Foot.kalmanUpdate(Foot.Left);
 
                     //// Kalman Reset Step ////
-                    Foot.KalmanResetStep(Foot.Right);
-                    Foot.KalmanResetStep(Foot.Left);
+                    Foot.kalmanResetStep(Foot.Right);
+                    Foot.kalmanResetStep(Foot.Left);
 
                     //// Generate Template ////
                     Foot.generateTemplateNp();
-
 
                     //// Drawing Results ////
                     Foot.drawingResults();
@@ -126,14 +125,49 @@ int main(int argc, char *argv[]){
 
 
                 }else{
+                    //// matchingScorePocc ////
+                    Foot.matchingScorePocc();
+
+                    ////  One matchingAraea? ////
+                    Foot.occlusionType();
+                    //// Total Occlusion? ////
+                    if (Foot.totalOccR && Foot.totalOccL){
+
+                        cout << "Total Occlusion" << endl;
+
+                    }else{
+                        //// Kalman Filter ////
+                        Foot.kalmanPredict(Foot.Right, dT);
+                        Foot.kalmanPredict(Foot.Left, dT);
+
+                        //// Maximum Candidates Vector ////
+                        Foot.maxCandidatesPocc();
+
+                        //// Select Matching Score ////
+                        Foot.matchingSelectPocc();
+
+                        //// Proyect Predicted Boxes ////
+                        Foot.proyectBoxes();
+
+
+
+
+
+
+
+
+
+                    }
+
+
+
+
                     /*
                     //// Measure Foot ////
                     Foot.measureFoot(Foot.Right);
                     Foot.measureFoot(Foot.Left);
 
-                    //// Kalman Filter ////
-                    Foot.KalmanPredict(Foot.Right, dT);
-                    Foot.KalmanPredict(Foot.Left, dT);
+
 
                     //// Measure Error ////
                     Foot.measureError1Np(Foot.Right);
@@ -148,17 +182,20 @@ int main(int argc, char *argv[]){
                     Foot.KalmanResetStep(Foot.Left);
                     */
 
-                    //// matchingScorePocc ////
-                    Foot.matchingScorePocc();
+
+
+
 
                     //// Drawing Results ////
                     Foot.drawingResults();
 
+                    //// Clear Variables ////
+                    Foot.clearVariables();
 
 
                 }
 
-                cout << Foot.occlusion << endl;
+
 
             }
 

@@ -18,10 +18,10 @@ foot::foot(bool start) {
 
 //// COLORS ////
 
-cv::Scalar foot::cyan(255, 255, 0);
-cv::Scalar foot::green(0, 255, 0);
-cv::Scalar foot::ivory(240, 255, 255);
-cv::Scalar foot::blueviolet(226, 43, 138);
+cv::Scalar foot::cyan(255, 255, 0); // NOLINT
+cv::Scalar foot::green(0, 255, 0); // NOLINT
+cv::Scalar foot::ivory(240, 255, 255); // NOLINT
+cv::Scalar foot::blueviolet(226, 43, 138); // NOLINT
 
 
 
@@ -134,10 +134,6 @@ void foot::findBoxes(){
         found = frameAct.footBoxes[1].width > 0;
         frameAct.segmentedFrame  =  fg.clone();
     //}
-
-
-
-
 }
 
 
@@ -145,7 +141,7 @@ void foot::findBoxes(){
 
 
 //// Kalman Initialization////
-void foot::KalmanInit(int pie){
+void foot::kalmanInit(int pie){
 
     cv::KalmanFilter kf;
     if(pie == Right) {
@@ -196,7 +192,7 @@ void foot::KalmanInit(int pie){
 }
 
 //// Kalman Prediction ////
-void foot::KalmanPredict(int pie, int dT){
+void foot::kalmanPredict(int pie, int dT){
 
     cv::KalmanFilter *kf;
     cv::Mat *state;
@@ -273,7 +269,7 @@ void foot::measureError1Np(int pie){
 }
 
 //// Reset Kalman ////
-void foot::KalmanResetStep(int pie){
+void foot::kalmanResetStep(int pie){
 
     double error;
     bool reset;
@@ -306,7 +302,7 @@ void foot::KalmanResetStep(int pie){
 }
 
 //// Kalman Correction ////
-void foot::KalmanUpdate(int pie){
+void foot::kalmanUpdate(int pie){
 
     cv::KalmanFilter *kf;
     cv::Mat *state;
@@ -452,6 +448,9 @@ void foot::matchingScorePocc(){
 
     cv::Rect roioc(xoc, yoc, woc, hoc);
 
+    occlusionCorner.x = xoc;
+    occlusionCorner.y = yoc;
+
     frameAct.occlusionFrame = frameAct.procesFrame(roioc);
     frameAct.occlumaskFrame = frameAct.segmentedFrame(roioc);
 
@@ -479,19 +478,12 @@ void foot::matchingScorePocc(){
 }
 
 //// Found Local Maximum ////
-void foot::FindLocalMaximum(){
+void foot::occlusionType(){
 
     cv::Mat segmentationR, segmentationL;
     cv::Mat erodedR, erodedL;
     cv::Mat statusR, statusL;
-    cv::Mat centroidsR, centroidsL;
     cv::Mat componentsR, componentsL;
-
-    double minVal, maxVal;
-    cv::Point  minLoc, maxLoc;
-
-    vector<cv::Point> result;
-    cv::Point centro_masa;
 
     //// Segmentation ////
     threshold(frameAct.matchScoreR, segmentationR, 190, 255, THRESH_BINARY);
@@ -503,69 +495,71 @@ void foot::FindLocalMaximum(){
     connectedComponentsWithStats(erodedR, componentsR, statusR, centroidsR, 4, CV_32S);
     connectedComponentsWithStats(erodedL, componentsL, statusL, centroidsL, 4, CV_32S);
 
-    componentsR.convertTo(componentsR, CV_8UC1); // NOLINT
-    componentsL.convertTo(componentsL, CV_8UC1); // NOLINT
+    totalOccR = centroidsR.rows <= 2;
+    totalOccL = centroidsL.rows <= 2;
 
+}
 
+//// Max Candidates Points Vector ////
+//// Points Corrected for Kalman Compare ////
+void foot::maxCandidatesPocc(){
 
+    cv::Point centro_masa;
 
-    /*
-    cv::Mat auxR(componentsR.rows, componentsR.cols, CV_8UC1, Scalar(0)); // NOLINT
-    cv::Mat auxL(componentsL.rows, componentsL.cols, CV_8UC1, Scalar(0)); // NOLINT
-
-    vector<Mat> subimages;
-
-    for (unsigned int i = 0; i < centroids.rows - 1 ; ++i){
-        for (unsigned int j = 0; j < components.rows; ++j){
-            for (unsigned int k = 0; k < components.cols; ++k){
-                if(components.at<uchar>(j, k) == i+1)
-                    aux.at<uchar>(j,k) = 1;
-                else
-                    aux.at<uchar>(j,k) = 0;
-            }
-        }
-
-        centro_masa.x = int(centroids.at<double>(i+1,0));
-        centro_masa.y = int(centroids.at<double>(i+1,1));
-        result.push_back(centro_masa);
-
-        circle(matchscore, centro_masa, 1, CV_RGB(0,255,0), -1);
-
-        dilate(aux, aux, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3)));
-        subimages.push_back(aux.clone());
-        matchscore.copyTo(match_proc, subimages.at(i));
-        minMaxLoc(match_proc, &minVal, &maxVal, &minLoc, &maxLoc, Mat());
-        //circle(matchscore, maxLoc, 1, CV_RGB(0,255,0), -1);
-
-        ////result.push_back(maxLoc);
-
-        match_proc.release();
-
+    for (int i = 0; i < centroidsR.rows - 1; ++i) {
+        centro_masa.x = int(centroidsR.at<double>(i+1,0));
+        centro_masa.y = int(centroidsR.at<double>(i+1,1));
+        maxLocR.push_back(centro_masa);
+    }
+    for (int i = 0; i < centroidsL.rows - 1; ++i) {
+        centro_masa.x = int(centroidsL.at<double>(i+1,0));
+        centro_masa.y = int(centroidsL.at<double>(i+1,1));
+        maxLocL.push_back(centro_masa);
     }
 
-    */
+}
 
+//// Measure Distance Kalman vs Matching ////
+void foot::matchingSelectPocc(){
 
-    matchscore.convertTo(match_show, CV_8UC1); //NO INTENT
-    applyColorMap(match_show, match_show, COLORMAP_JET);
-    namedWindow("maximos", WINDOW_AUTOSIZE );
-    Size size_match_show(match_show.cols*10, match_show.rows*10);
-    resize(match_show, match_show, size_match_show);
-    imshow("maximos", match_show);
+    double distR, distL, distMaxR = 1000, distMaxL = 1000;
+    cv::Point bestPointR, bestPointL;
 
-    namedWindow("match labels", WINDOW_AUTOSIZE );
-    Size size_components(components.cols*10, components.rows*10);
-    resize(components, components, size_components);
-    normalize(components, components, 255, 0, NORM_MINMAX);
-    imshow("match labels", components);
-
-    ////cout << "Tamaño vector: " << result.size() << endl;
-
-    return result;
+    for (const auto &i : maxLocR) {
+        bestPointR = i;
+        bestPointR.y = bestPointR.y + frameAnt.templateFrameR.rows + occlusionCorner.y;
+        bestPointR.x = bestPointR.x + (frameAnt.templateFrameR.cols/2) + occlusionCorner.x;
+        distR = distance(centerKalman_R, bestPointR);
+        if (distR < distMaxR){
+            distMaxR = distR;
+            maxlocSelectedR = i;
+        }
+    }
+    for (const auto &i : maxLocL) {
+        bestPointL = i;
+        bestPointL.y = bestPointL.y + frameAnt.templateFrameL.rows + occlusionCorner.y;
+        bestPointL.x = bestPointL.x + (frameAnt.templateFrameL.cols/2) + occlusionCorner.x;
+        distL = distance(centerKalman_L, bestPointL);
+        if (distL < distMaxL){
+            distMaxL = distL;
+            maxlocSelectedL = i;
+        }
+    }
 }
 
 
+//// Update FootBoxes in Partial Occlusion ////
+void foot::proyectBoxes() {
 
+    frameAct.footBoxes[Right]   = predRect_R;
+    frameAct.footBoxes[Right].x = maxlocSelectedR.x + occlusionCorner.x;
+    frameAct.footBoxes[Right].y = maxlocSelectedR.y + occlusionCorner.y;
+
+    frameAct.footBoxes[Left]   = predRect_L;
+    frameAct.footBoxes[Left].x = maxlocSelectedL.x + occlusionCorner.x;
+    frameAct.footBoxes[Left].y = maxlocSelectedL.y + occlusionCorner.y;
+
+}
 
 
 
@@ -618,6 +612,16 @@ void foot::drawingResults() {
     //// Matchscore Partial Occlusion ////
     }else{
 
+//        //// Kalman Prediction ////
+//        cv::rectangle(frameAct.resultFrame, predRect_R, CV_RGB(255, 0, 0), 2);
+//        cv::rectangle(frameAct.resultFrame, predRect_L, CV_RGB(255, 0, 0), 2);
+//        cv::circle(frameAct.resultFrame, centerKalman_R, 2, CV_RGB(255, 0, 0), -1);
+//        cv::circle(frameAct.resultFrame, centerKalman_L, 2, CV_RGB(255, 0, 0), -1);
+
+        //// Predicted Boxes ////
+        paintRectangles(frameAct.resultFrame, frameAct.footBoxes, cyan);
+
+
         namedWindow("Occlusion", WINDOW_AUTOSIZE);
         namedWindow("TempR", WINDOW_AUTOSIZE);
         namedWindow("TempL", WINDOW_AUTOSIZE);
@@ -629,6 +633,17 @@ void foot::drawingResults() {
         Size sizetempBoxL(frameAnt.templateFrameL.cols*10, frameAnt.templateFrameL.rows*10);
         Size sizematchScoreR(frameAct.matchScoreShowR.cols*10, frameAct.matchScoreShowR.rows*10);
         Size sizematchScoreL(frameAct.matchScoreShowL.cols*10, frameAct.matchScoreShowL.rows*10);
+
+        //// Paint Local Max Points ////
+        for (const auto &i : maxLocR) {
+            circle(frameAct.matchScoreShowR, i, 1, CV_RGB(0,0,255), -1);
+        }
+        for (const auto &i : maxLocL) {
+            circle(frameAct.matchScoreShowL, i, 1, CV_RGB(0,0,255), -1);
+        }
+
+        circle(frameAct.matchScoreShowR, maxlocSelectedR, 1, blueviolet, -1);
+        circle(frameAct.matchScoreShowL, maxlocSelectedL, 1, blueviolet, -1);
 
         resize(frameAct.occlusionFrame, frameAct.occlusionFrame, sizeoccBox);
         resize(frameAnt.templateFrameR, frameAnt.templateFrameR, sizetempBoxR);
@@ -644,6 +659,13 @@ void foot::drawingResults() {
 
     }
 
+}
+
+//// Clear Variables ////
+void foot::clearVariables(){
+
+    maxLocR.clear();
+    maxLocL.clear();
 
 
 }

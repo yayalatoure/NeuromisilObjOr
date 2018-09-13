@@ -56,7 +56,7 @@ class foot {
 
     public:
         //// Constructor ////
-        foot(bool start);
+        explicit foot(bool start);
 
         //// Segmentation & ROI (footBoxes) ////
         void findBoxes();
@@ -67,10 +67,10 @@ class foot {
         void measureFoot(int pie);
 
         //// Kalman Filter ////
-        void KalmanInit(int pie);
-        void KalmanPredict(int pie, int dT);
-        void KalmanResetStep(int pie);
-        void KalmanUpdate(int pie);
+        void kalmanInit(int pie);
+        void kalmanPredict(int pie, int dT);
+        void kalmanResetStep(int pie);
+        void kalmanUpdate(int pie);
 
         //// Measure Error ////
         double distance(cv::Point center_kalman, cv::Point center_measured);
@@ -79,23 +79,39 @@ class foot {
         //// Generate Template ////
         void generateTemplateNp();
 
+
         //// Partial Occlusion ////
         void matchingScorePocc();
+        //// Occlusion Type ////
+        void occlusionType();
+        //// Max Candidates Points Vector ////
+        void maxCandidatesPocc();
+        //// Select Matching Score ////
+        void matchingSelectPocc();
+        //// Proyect Measure-Box ////
+        void proyectBoxes();
 
-        //// Find Local Maximum ////
-        void FindLocalMaximum();
+
+
+
+
+
+
 
         //// Drawing Result ////
         void drawingResults();
         void paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes, cv::Scalar color);
+
+        //// Clear Variables ////
+        void clearVariables();
 
 
 
 public:
 
         //// Int Atributes ////
-        int Left = 2;
         int Right = 1;
+        int Left = 2;
 
         //// Bool Atributes ////
         bool start;
@@ -105,6 +121,8 @@ public:
         bool step_R;
         bool step_L;
         bool occlusion;
+        bool totalOccR;
+        bool totalOccL;
 
         //// Image & Boxes Atributes ////
         ImageBoxes frameAct, frameAnt;
@@ -134,13 +152,28 @@ public:
         double errorNpAct1_L, errorNpAnt1_L;
         double errorNpAct2, errorNpAnt2; // |Measured position - Kalman correction|
 
+        //// PARTIAL OCCLUSION ////
+
+        //// Occlusion Variables ////
+        cv::Point occlusionCorner;
+
+        //// Maximum Candidates ////
+        cv::Mat centroidsR; // maximos locales matching R
+        cv::Mat centroidsL; // maximos locales matching L
+        vector<Point> maxLocR, maxLocL;
+        //// Max Matching Points ////
+        cv::Point maxlocSelectedR;
+        cv::Point maxlocSelectedL;
+
+
 
 
         //// Colors ////
-        cv::Scalar cyan;
-        cv::Scalar green;
-        cv::Scalar ivory;
-        cv::Scalar blueviolet;
+        static cv::Scalar cyan;
+        static cv::Scalar green;
+        static cv::Scalar ivory;
+        static cv::Scalar blueviolet;
+
 
 };
 
