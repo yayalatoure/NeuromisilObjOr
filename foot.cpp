@@ -24,7 +24,6 @@ cv::Scalar foot::ivory(240, 255, 255); // NOLINT
 cv::Scalar foot::blueviolet(226, 43, 138); // NOLINT
 
 
-
 //// SEGMENTATION AND FOOT BOXES ////
 
 
@@ -275,23 +274,24 @@ void foot::kalmanResetStep(int pie){
     bool reset;
 
     if (pie == Right){
-            Reset_R = abs(errorNpAct1_R) > 2;
+            Reset_R = abs(errorNpAct1_R) > 2;//2
             reset = Reset_R;
     }else{
-            Reset_L = abs(errorNpAct1_L) > 2;
+            Reset_L = abs(errorNpAct1_L) > 2;//2
             reset = Reset_L;
     }
 
-    if(!occlusion & !reset){
+    //if(!occlusion & !reset){
+    if(!reset){
         if (pie == Right){
             error = (errorNpAct1_R); //+ errorNpAnt1_R)/2;
-            if(abs(error) < 2.5) {
+            if(abs(error) < 2.2) {
                 step_R = true;
             }
             errorNpAnt1_R = errorNpAct1_R;
         }else{
             error = (errorNpAct1_L); //  + errorNpAnt1_L)/2;
-            if(abs(error) < 2.5) {
+            if(abs(error) < 2.2) {
                 step_L = true;
             }
             errorNpAnt1_L = errorNpAct1_L;
@@ -336,34 +336,18 @@ void foot::kalmanUpdate(int pie){
         }
     }else{
 
-        //// ESTA WEA SE TIENE QUE CAMBIAR ////
-
-        if (occlusion) {
-            if(pie == Right) {
-                (*measure).at<float>(0) = frameAct.footBoxes[Right].x + float(frameAct.footBoxes[Right].width) / 4;
-                (*measure).at<float>(1) = frameAct.footBoxes[Right].y + float(frameAct.footBoxes[Right].height);
-                (*measure).at<float>(2) = (float) frameAct.footBoxes[Right].width / 3;
-                (*measure).at<float>(3) = (float) (frameAct.footBoxes[Right].height*3) /4 ;
-            }else if(pie == Left){
-                (*measure).at<float>(0) = frameAct.footBoxes[Right].x + (float(frameAct.footBoxes[Right].width)*3) / 4;
-                (*measure).at<float>(1) = frameAct.footBoxes[Right].y + (float(frameAct.footBoxes[Right].height));
-                (*measure).at<float>(2) = (float) frameAct.footBoxes[Right].width / 3;
-                (*measure).at<float>(3) = (float) (frameAct.footBoxes[Right].height*3) /4 ;
-            }
-        } else {
-            if(pie == Right) {
-                (*measure).at<float>(0) = frameAct.footBoxes[Right].x + float(frameAct.footBoxes[Right].width) / 2;
-                (*measure).at<float>(1) = frameAct.footBoxes[Right].y + float(frameAct.footBoxes[Right].height);
-                (*measure).at<float>(2) = (float) frameAct.footBoxes[Right].width;
-                (*measure).at<float>(3) = (float) frameAct.footBoxes[Right].height;
-            }else if(pie == Left){
-                (*measure).at<float>(0) = frameAct.footBoxes[Left].x + float(frameAct.footBoxes[Left].width) / 2;
-                (*measure).at<float>(1) = frameAct.footBoxes[Left].y + float(frameAct.footBoxes[Left].height);
-                (*measure).at<float>(2) = (float) frameAct.footBoxes[Left].width;
-                (*measure).at<float>(3) = (float) frameAct.footBoxes[Left].height;
-            }
+        if(pie == Right) {
+            (*measure).at<float>(0) = frameAct.footBoxes[Right].x + float(frameAct.footBoxes[Right].width) / 2;
+            (*measure).at<float>(1) = frameAct.footBoxes[Right].y + float(frameAct.footBoxes[Right].height);
+            (*measure).at<float>(2) = (float) frameAct.footBoxes[Right].width;
+            (*measure).at<float>(3) = (float) frameAct.footBoxes[Right].height;
+        }else if(pie == Left){
+            (*measure).at<float>(0) = frameAct.footBoxes[Left].x + float(frameAct.footBoxes[Left].width) / 2;
+            (*measure).at<float>(1) = frameAct.footBoxes[Left].y + float(frameAct.footBoxes[Left].height);
+            (*measure).at<float>(2) = (float) frameAct.footBoxes[Left].width;
+            (*measure).at<float>(3) = (float) frameAct.footBoxes[Left].height;
         }
-        // cambie flag reset por found
+
         if (*reset){ // First detection!
             // >>>> Initialization
             (*kf).errorCovPre.at<float>(0) = 1; // px
@@ -437,7 +421,6 @@ void foot::generateTemplateNp(){
 
 
 //// OCCLUSION ////
-
 
 //// Matching Score Partial Occlusion
 //// gets the matching score for Right and Left foot.
@@ -550,6 +533,7 @@ void foot::matchingSelectPocc(){
 
 
 //// Update FootBoxes in Partial Occlusion ////
+//// considera proyectar tomando en cuenta el punto mas bajo en template mask ////
 void foot::proyectBoxes() {
 
     frameAct.footBoxes[Right]   = predRect_R;
@@ -599,16 +583,6 @@ void foot::drawingResults() {
         cv::circle(frameAct.resultFrame, centerKalman_R, 2, CV_RGB(255, 0, 0), -1);
         cv::circle(frameAct.resultFrame, centerKalman_L, 2, CV_RGB(255, 0, 0), -1);
 
-        //// Step Normal Detection ////
-        if (step_R && !occlusion) {
-            cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Right], CV_RGB(0, 0, 255), 2);
-            cv::circle(frameAct.resultFrame, centerMeasured_R, 2, CV_RGB(0, 0, 255), -1);
-        }
-        if (step_L && !occlusion) {
-            cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Left], CV_RGB(0, 0, 255), 2);
-            cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0, 0, 255), -1);
-        }
-
         //// Template Boxes Generated in Normal Detection ////
         //paintRectangles(frameAct.resultFrame, frameAct.tempBoxes, blueviolet);
 
@@ -651,15 +625,28 @@ void foot::drawingResults() {
         resize(frameAct.occlusionFrame, frameAct.occlusionFrame, sizeoccBox);
         resize(frameAnt.templateFrameR, frameAnt.templateFrameR, sizetempBoxR);
         resize(frameAnt.templateFrameL, frameAnt.templateFrameL, sizetempBoxL);
+        resize(frameAnt.tempmaskFrameR, frameAnt.tempmaskFrameR, sizetempBoxR);
+        resize(frameAnt.tempmaskFrameL, frameAnt.tempmaskFrameL, sizetempBoxL);
         resize(frameAct.matchScoreShowR, frameAct.matchScoreShowR, sizematchScoreR);
         resize(frameAct.matchScoreShowL, frameAct.matchScoreShowL, sizematchScoreL);
 
         imshow("Occlusion", frameAct.occlusionFrame);
-        imshow("TempR", frameAnt.templateFrameR);
-        imshow("TempL", frameAnt.templateFrameL);
+        imshow("TempR", frameAnt.tempmaskFrameR);
+        imshow("TempL", frameAnt.tempmaskFrameL);
         imshow("MatchR", frameAct.matchScoreShowR);
         imshow("MatchL", frameAct.matchScoreShowL);
 
+
+    }
+
+    //// Step Detected ////
+    if (step_R) {
+        cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Right], CV_RGB(0, 0, 255), 2);
+        cv::circle(frameAct.resultFrame, centerMeasured_R, 2, CV_RGB(0, 0, 255), -1);
+    }
+    if (step_L) {
+        cv::rectangle(frameAct.resultFrame, frameAct.footBoxes[Left], CV_RGB(0, 0, 255), 2);
+        cv::circle(frameAct.resultFrame, centerMeasured_L, 2, CV_RGB(0, 0, 255), -1);
     }
 
 }
