@@ -107,7 +107,7 @@ void foot::segmentation(){
 
     cv::Mat fg, labels, labels2, stats, centroids;
 
-    double backgroundRatio = 0.7;
+    double backgroundRatio = 0.9;
     double learningRate = 0.005; ////0.005
     double varThreshold = 80;
     int    nmixtures = 3;
