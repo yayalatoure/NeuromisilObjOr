@@ -26,7 +26,6 @@ cv::Scalar foot::blueviolet(226, 43, 138); // NOLINT
 
 //// SEGMENTATION AND FOOT BOXES ////
 
-
 //// Draw Foot Rectangles from Measurement ////
 void foot::paintRectangles(cv::Mat &img, std::map<int, cv::Rect> &bboxes, cv::Scalar color){
     std::map<int, cv::Rect>::iterator it, it_end = bboxes.end();
@@ -123,8 +122,8 @@ void foot::segmentation(){
     //// Start Segmentation ////
     mog->apply(frameAct.processFrame, fg, 2*learningRate);
 
-    cv::dilate(fg, fg, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(4,6)));
-    cv::erode(fg, fg, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,5))); ////(4,6)
+    cv::dilate(fg, fg, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(4, 6))); ////(4,6)
+    cv::erode(fg, fg, cv::getStructuringElement(cv::MORPH_RECT,  cv::Size(3, 5))); ////(4,6)
     cv::connectedComponentsWithStats(fg, labels, stats, centroids, 8, CV_32S);
 
     frameAct.segmentedFrame  =  fg.clone();

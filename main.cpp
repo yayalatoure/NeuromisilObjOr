@@ -30,7 +30,7 @@ int main(int argc, char *argv[]){
 
     //// Videos nuevos
     string path_cal  = "/home/lalo/Desktop/Data_Videos/CAL_Test1/*.jpg";
-    string path_test = "/home/lalo/Desktop/Data_Videos/Player2/*.jpg";
+    string path_test = "/home/lalo/Desktop/Data_Videos/Player1/*.jpg";
 
 
     //// Video Original
