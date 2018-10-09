@@ -28,9 +28,8 @@ using namespace cv;
 typedef struct {
 
     ////// Frames //////
-    cv::Mat actualFrame;
-    cv::Mat previousFrame;
-    cv::Mat procesFrame;
+
+    cv::Mat processFrame;
     cv::Mat segmentedFrame;
     cv::Mat resultFrame;
     cv::Mat templateFrameR;
@@ -43,6 +42,11 @@ typedef struct {
     cv::Mat matchScoreL;
     cv::Mat matchScoreShowR;
     cv::Mat matchScoreShowL;
+
+    //// Segmentation Labels ////
+
+    cv::Mat labelsFrame;
+    cv::Mat labels2Frame;
 
     //// Foot Boxes ////
     map<int, Rect> footBoxes;
@@ -59,7 +63,8 @@ class foot {
         explicit foot(bool start);
 
         //// Segmentation & ROI (footBoxes) ////
-        void findBoxes();
+        void segmentation();
+        void findFootBoxes();
         void getBlobs(cv::Mat labels, std::map<int, cv::Rect> &bboxes);
         void getFeet(Mat fg, map<int, Rect> &bboxes, Mat labels, Mat labels2, map<int, Rect> &fboxes);
 

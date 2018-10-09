@@ -104,10 +104,9 @@ void foot::getFeet(cv::Mat fg, std::map<int, cv::Rect> &bboxes, cv::Mat labels, 
 }
 
 //// Segmentation and Foot Boxes ////
-void foot::findBoxes(){
+void foot::segmentation(){
 
-    /* Inicializacion */
-    Mat fg, labels, labels2, stats, centroids;
+    cv::Mat fg, labels, labels2, stats, centroids;
 
     double backgroundRatio = 0.7;
     double learningRate = 0.005; ////0.005
@@ -122,17 +121,23 @@ void foot::findBoxes(){
     mog->setShadowValue(0);
 
     //// Start Segmentation ////
-    mog->apply(frameAct.procesFrame, fg, 2*learningRate);
+    mog->apply(frameAct.processFrame, fg, 2*learningRate);
 
     cv::dilate(fg, fg, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(4,6)));
     cv::erode(fg, fg, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,5))); ////(4,6)
     cv::connectedComponentsWithStats(fg, labels, stats, centroids, 8, CV_32S);
 
-    //if(start){
-        getFeet(fg, frameAct.blobBoxes, labels, labels2, frameAct.footBoxes);
-        found = frameAct.footBoxes[1].width > 0;
-        frameAct.segmentedFrame  =  fg.clone();
-    //}
+    frameAct.segmentedFrame  =  fg.clone();
+    frameAct.labelsFrame = labels.clone();
+    frameAct.labels2Frame = labels2.clone();
+
+}
+
+void foot::findFootBoxes() {
+
+    getFeet(frameAct.segmentedFrame, frameAct.blobBoxes, frameAct.labelsFrame, frameAct.labels2Frame, frameAct.footBoxes);
+    found = frameAct.footBoxes[1].width > 0;
+
 }
 
 
@@ -408,10 +413,10 @@ void foot::generateTemplateNp(){
             frameAct.tempBoxes[Right] = roifootR;
             frameAct.tempBoxes[Left]  = roifootL;
 
-            frameAct.templateFrameR = frameAct.procesFrame(roifootR);
+            frameAct.templateFrameR = frameAct.processFrame(roifootR);
             frameAct.tempmaskFrameR = frameAct.segmentedFrame(roifootR);
 
-            frameAct.templateFrameL = frameAct.procesFrame(roifootL);
+            frameAct.templateFrameL = frameAct.processFrame(roifootL);
             frameAct.tempmaskFrameL = frameAct.segmentedFrame(roifootL);
 
         }
@@ -435,7 +440,7 @@ void foot::matchingScorePocc(){
     occlusionCorner.x = xoc;
     occlusionCorner.y = yoc;
 
-    frameAct.occlusionFrame = frameAct.procesFrame(roioc);
+    frameAct.occlusionFrame = frameAct.processFrame(roioc);
     frameAct.occlumaskFrame = frameAct.segmentedFrame(roioc);
 
     cv::Mat matchScoreR, matchScoreL, matchScoreShowR, matchScoreShowL;
