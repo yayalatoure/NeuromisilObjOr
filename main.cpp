@@ -30,27 +30,29 @@ int main(int argc, char *argv[]){
 
     //// Videos nuevos
     string path_cal  = "/home/lalo/Desktop/Data_Videos/CAL_Test1/*.jpg";
-    string path_test = "/home/lalo/Desktop/Data_Videos/Player1/*.jpg";
+    string path_test = "/home/lalo/Desktop/Data_Videos/Player3/*.jpg";
 
 
     //// Video Original
 //    int count_test = 195+145, count_cal = 0, limit = 150-145;
 
     //// Videos nuevos limites nuevos
-    int count_test = 400, count_cal = 0, limit = 100;
+    int count_test = 2649-2335-100, count_cal = 0, limit = 100;
 
     vector<String> filenames_cal, filenames_test;
 
     glob(path_test, filenames_test);
     glob(path_cal , filenames_cal);
 
-    //// Logging error Kalman (frames) ////
+
     int digits = 5;
-    string fileName, substring;
-    fileName = "/home/lalo/Dropbox/Proyecto IPD441/NeuroMisil_Lalo/NeuroMisil/Logging/pasos_result.csv";
-    ofstream ofStream(fileName);
     size_t pos = filenames_test[count_test].find(".jpg");
-    ofStream << "Frame" << "," << "CX_Paso" << "," << "CY_Paso" << "," << "W_Paso" << "." << "H_Paso" << "," << "Pie" << "\n";
+
+    //// Logging error Kalman (frames) ////
+    string fileName, substring;
+//    fileName = "/home/lalo/Dropbox/Proyecto IPD441/NeuroMisil_Lalo/NeuroMisil/Logging/pasos_result.csv";
+//    ofstream ofStream(fileName);
+//    ofStream << "Frame" << "," << "CX_Paso" << "," << "CY_Paso" << "," << "W_Paso" << "." << "H_Paso" << "," << "Pie" << "\n";
 
     char ch = 0;
     int dT = 1;
@@ -76,10 +78,12 @@ int main(int argc, char *argv[]){
             img_test = imread(filenames_test[count_test], CV_LOAD_IMAGE_COLOR);
             substring = filenames_test[count_test].substr(pos - digits);
             Foot.frameAct.processFrame = img_cal;
+            Foot.start = true;
+
+            cout << substring << "\n" << endl;
 
         } else {
             img_test = imread(filenames_test[count_test], CV_LOAD_IMAGE_COLOR);
-            img_show = imread(filenames_test[count_test], CV_LOAD_IMAGE_COLOR);
             substring = filenames_test[count_test].substr(pos - digits);
             Foot.frameAct.processFrame = img_test;
             Foot.start = true;
@@ -203,10 +207,10 @@ int main(int argc, char *argv[]){
         }
 
         /////// Visualize ///////
-        if (count_cal < limit)
-            if (img_test.data) cv::imshow("frameAct", img_test);
+//        if (count_cal < limit)
+//            if (img_test.data) cv::imshow("frameAct", Foot.frameAct.resultFrame);
 
-        if (Foot.start && (Foot.frameAct.resultFrame.data) && (img_show.data)) {
+        if (Foot.start && (Foot.frameAct.resultFrame.data) && (Foot.frameAnt.resultFrame.data)) {
 
             cv::imshow("frameAct",  Foot.frameAct.resultFrame);
             cv::imshow("frameAnt ", Foot.frameAnt.resultFrame);
